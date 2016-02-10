@@ -1,0 +1,12 @@
+{
+	"name":"my-todolist",
+	"version":"0.1.0",
+	"dependencies":{
+		"express":"~4.13.4",
+		"ejs":"~2.4.1",
+		"cookie-session":"~2.0.0-alpha.1",
+		"body-parser":"~1.14.2"
+		},
+	"author":"Sylyon <bastien.drouot@ensta-bretagne.org>",
+	"description":"My first application with Node.js, thanks to Openclassrooms.com and Mateo21"
+}

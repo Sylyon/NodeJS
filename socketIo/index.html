@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta charset="utf-8" />
+        <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.12.0/jquery.min.js"></script>
+        <script src="/socket.io/socket.io.js" ></script>
+        <title>Socket.io</title>
+    </head>
+ 
+    <body>
+        <h1>Communication avec socket.io !</h1>
+		<p><input type="button" value="quelqu'un ?" id="poke" /></p>		
+        <script>
+            var socket = io.connect('http://localhost:8080');
+            var pseudo = prompt('Quel est votre pseudo ?');
+			socket.emit('petit_nouveau', pseudo);
+            socket.on('message',function(msg){
+            	alert('new message : '+msg['content']);
+            });
+            jQuery('#poke').click(function(){
+            	socket.emit('message','Je ne sais pas quoi écrire');
+            });
+        </script>
+    </body>
+</html>

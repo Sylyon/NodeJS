@@ -13,31 +13,73 @@
     </p>
 
     <form action="/" method="post" id="formTodolist">
-      <p>
         <label for="newtodo">Que devons nous faire ?</label>
         <input type="text" name="newtodo" id="newtodo" autofocus />
         <input type="submit" />
-      </p>
     </form>
 
     <script>
       var socket = io.connect('http://localhost:8080');
-      jQuery('#formTodolist').submit(function () {
-        var newtodo = jQuery('#newtodo').val();
-
-        // Ont envois le todo au serveur
-        socket.emit('newtodo', newtodo);
-
-        //On insert le todo dans la list des todos de la pages
-        jQuery("#listOfTodo").append('<p> <a id="deleteTodo">✘</a>'+ent(newtodo)+'</p>');
-        // Vide la zone de todo et remet le focus dessus
-        jQuery('#newtodo').val('').focus();
-
-        return false; // Permet de bloquer l'envoi "classique" du formulaire
+      var clienId = '';
+      var cont = 0;
+      socket.on('connected',function(init){
+        clienId = init.socketId;
+        cont = 0;
       });
+        jQuery('#formTodolist').submit(function () {
+          var newtodo = jQuery('#newtodo').val();
+
+          // On envois le todo au serveur
+          socket.emit('newTodo', {id:(clienId+cont) , message:newtodo});
+
+          //On insert le todo dans la list des todos de la pages
+          jQuery("#listOfTodo").append('<p id='+clienId+cont+'> <a href="/" id="delete" name='+clienId+cont+'>✘</a>  '+ent(newtodo)+'</p>');
+
+          cont = cont+1;
+          
+          //Action associer au click sur la croix ( suprimer )
+          jQuery("a").on("click",function(){
+            //on supprime le todo de la page
+            //jQuery('#'+String(jQuery(this).attr("name"))).remove();
+
+            //On informe le serveur de la supprésion du todo d'id: jQuery(this).attr("name")
+            socket.emit('deleteTodo', jQuery(this).attr("name"));
+
+            // On bloque la redirection du lien url
+            return false; 
+          });
+
+
+          // Vide la zone de todo et remet le focus dessus
+          jQuery('#newtodo').val('').focus();
+
+
+          // On bloque l'envoi "classique" du formulaire
+          return false; 
+        });
+      
+
+      // On suprime le todo designer par le serveur
+      socket.on('todoDelete',function(id){
+        jQuery("#"+id).remove();
+      });
+
+      // On ajoute le todo donner par le serveur
+      socket.on('addTodo',function(todo){
+        jQuery("#listOfTodo").append('<p id='+todo.id+'> <a href="/" id="delete" name='+todo.id+'>✘</a>  '+ent(todo.message)+'</p>');
+      });
+
+      /**
+      * Bloquer l'écriture de JavaScipt de de Html
+       *
+       * @param   str     Le string rentré par l'utilisateur
+       * @return          Le string sécurisé 
+       * @author  Sylyon
+      **/
       function ent(str) {
         return String(str).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
       }
+
     </script>
   </body>
 </html>

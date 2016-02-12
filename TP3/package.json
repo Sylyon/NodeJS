@@ -1,0 +1,13 @@
+{
+	"name":"test_session.socket.io",
+	"version":"0.1.0",
+	"dependencies":{
+		"express":"~4.13.4",
+		"socket.io":"~1.4.5",	
+		"ejs":"~2.4.1",
+		"body-parser":"~1.14.2",
+		"ent":"~2.2.0"
+		},
+	"author":"Sylyon <bastien.drouot@ensta-bretagne.org>",
+	"description":"Exercice pour le cours de Node.js de Openclassrooms"
+}

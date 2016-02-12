@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <title>Synchronise todolist</title>
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.12.0/jquery.min.js"></script>
+    <script src="/socket.io/socket.io.js" ></script>
+  </head>
+ 
+  <body>
+    <h1>Une todo list synchroniser via socket.io</h1>
+    <p id="listOfTodo">
+    </p>
+
+    <form action="/" method="post" id="formTodolist">
+      <p>
+        <label for="newtodo">Que devons nous faire ?</label>
+        <input type="text" name="newtodo" id="newtodo" autofocus />
+        <input type="submit" />
+      </p>
+    </form>
+
+    <script>
+      var socket = io.connect('http://localhost:8080');
+      jQuery('#formTodolist').submit(function () {
+        var newtodo = jQuery('#newtodo').val();
+
+        // Ont envois le todo au serveur
+        socket.emit('newtodo', newtodo);
+
+        //On insert le todo dans la list des todos de la pages
+        jQuery("#listOfTodo").append('<p> <a id="deleteTodo">✘</a>'+ent(newtodo)+'</p>');
+        // Vide la zone de todo et remet le focus dessus
+        jQuery('#newtodo').val('').focus();
+
+        return false; // Permet de bloquer l'envoi "classique" du formulaire
+      });
+      function ent(str) {
+        return String(str).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+      }
+    </script>
+  </body>
+</html>

@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta charset="utf-8" />
+        <title>My Chat</title>
+        <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.12.0/jquery.min.js"></script>
+        <script src="/socket.io/socket.io.js" ></script>
+        <title>Socket.io</title>
+    </head>
+ 
+    <body>
+        <h1>Communication avec socket.io !</h1>
+
+        <p id="status"><i><b>Disconected</b></i></p>
+        <br/>
+        <form action="/" method="post" id="formChat">
+            <input type="text" name="message" id="message" placeholder="Votre message..." size="50" autofocus />
+            <input type="submit" id="sand_message" value="Send" />
+        </form>
+	    
+        <p id="chat">
+        </p>
+        <script>
+            // Ouverture du canal socket.io
+
+            var socket = io.connect('http://localhost:8080');
+            <% if(session.pseudo == 'undefined' || session.pseudo == 'annonymus'){ %>   
+                // Une popep demande le pseudo
+                var pseudo = prompt('Quel est votre pseudo ?');
+                if(pseudo == '' || pseudo==null){
+                    pseudo='annonymus3';
+                }
+                pseudo = ent(pseudo);
+                //On envois le pseudo au server
+                socket.emit('petit_nouveau', pseudo);
+            <% } %>
+            jQuery("#status").html('<i>Connecter as : <b>'+'<%=session.pseudo%>'+'</b></i>');
+            //Lorsquel'on envois le formulaire ( un nouveau msg)
+            jQuery('#formChat').submit(function () {
+                var message = jQuery('#message').val();
+                 // Ont envois le msg au serveur
+                socket.emit('newMessage', message);
+                //Insertion du message envoyer
+                jQuery("#chat").append('<p><b>'+ent('<%=session.pseudo%>')+' : </b>'+ent(message)+'</p>');
+                // Vide la zone de Chat et remet le focus dessus
+                jQuery('#message').val('').focus();
+
+                return false; // Permet de bloquer l'envoi "classique" du formulaire
+            });
+
+            //Insertion des messages recut
+            socket.on('message',function(message){
+                jQuery("#chat").append('<p><b>'+message.pseudo+' : </b>'+message.msg+'</p>');
+            });
+
+            //New user connected
+            socket.on('newUser',function(aPseudo){
+                jQuery("#chat").append('<p><i color="red">Tout le monde dit bonjour à : </i><i><b>'+aPseudo+'</b></i></p>');
+            });
+
+            function ent(str) {
+                return String(str).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+            }
+        </script>
+    </body>
+</html>

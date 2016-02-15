@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+
+<html>
+    <head>
+        <title>Ma todolist</title>
+        <style>
+            a {text-decoration: none; color: black;}
+        </style>
+    </head>
+
+    <body>
+        <h1>Ma todolist</h1>
+
+        <ul id="tasks-list"></ul>
+
+        <form id="task-form">
+            <p>
+                <label for="newtodo">Que dois-je faire ?</label>
+                <input type="text" name="newtodo" id="newtodo" autofocus />
+                <input type="submit" />
+            </p>
+        </form>
+
+        <script src="http://code.jquery.com/jquery-1.10.1.min.js"></script>
+        <script src="/socket.io/socket.io.js"></script>
+        <script>
+            var tasks = [];
+            var users = [];
+            // Connexion à socket.io
+            var socket = io.connect('http://localhost:8080');
+            socket.on('tasks', function(data) {
+              tasks = data;
+              printTasks();
+            });
+
+            // Quand on reçoit une tache, on l'insère dans la page
+            socket.on('add_task', function(data) {
+              addNewTask(data);
+            });
+
+            socket.on('delete_task', function(index) {
+              deleteTask(index);
+            });
+
+            // Lorsqu'on envoie le formulaire, on transmet la tache et on l'affiche sur la page
+            $('#task-form').submit(function () {
+                var task = $('#newtodo').val();
+                addNewTaskEmit(task);
+                $('#newtodo').val('').focus(); // Vide le formulaire et remet le focus dessus
+                return false; // Permet de bloquer l'envoi "classique" du formulaire
+            });
+
+            function printTasks() {
+              $('#tasks-list').html('');
+              tasks.forEach(function(task, i) {
+                $('#tasks-list').prepend('<li><a href="#" onclick="deleteTaskEmit(' + i + ')">✘</a> '+ task +'</li>');
+              });
+            }
+
+            function addNewTask(task) {
+              tasks.push(task);
+              var lastIndex = tasks.length - 1;
+              $('#tasks-list').prepend('<li><a href="#" onclick="deleteTaskEmit(' + lastIndex + ')">✘</a> '+ task +'</li>');
+            }
+
+            function addNewTaskEmit(task) {
+              addNewTask(task);
+              socket.emit('add_task', task);
+            }
+
+            function deleteTask(index) {
+              tasks.splice(index, 1);
+              printTasks();
+            }
+
+            function deleteTaskEmit(index) {
+              deleteTask(index);
+              socket.emit('delete_task', index);
+            }
+
+        </script>
+    </body>
+</html>

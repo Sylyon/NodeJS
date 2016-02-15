@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>Ma todolist</title>
+        <style>
+            a {text-decoration: none; color: black;}
+        </style>
+    </head> 
+    <body>
+        <h1 id="h1">Ma todolist</h1>
+        <ul id="ul">
+        <% todolist.forEach(function(todo, index) { %>
+            <li><a href="/todo/supprimer/<%= index %>">✘</a> <%= todo %></li>
+        <% }); %>
+        </ul>
+        <div >
+        </div>
+        <form action="/todo/ajouter/" method="post" id="form">
+            <p>
+                <label for="newtodo">Que dois-je faire ?</label>
+                <input type="text" name="newtodo" id="newtodo" autofocus />
+                <input type="submit" id="submit" />
+            </p>
+        </form>
+        <script src="http://code.jquery.com/jquery-1.10.1.min.js"></script>
+        <script src="/socket.io/socket.io.js"></script>
+        <script>
+            var socket = io.connect('http://localdev:8080');
+            socket.on('newtodo', function(newtodo) {
+                if (newtodo != '') {
+                    $('#ul').append('<li><a href="/todo/supprimer/">✘</a>'+ newtodo + '</li>');
+                };
+            });
+        </script>
+    </body>
+</html>

@@ -1,85 +1,96 @@
 <!DOCTYPE html>
 <html>
-  <head>
-    <meta charset="utf-8" />
-    <title>Synchronise todolist</title>
-    <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.12.0/jquery.min.js"></script>
-    <script src="/socket.io/socket.io.js" ></script>
-  </head>
+    <head>
+        <meta charset="utf-8" />
+        <title>Synchronise todolist</title>
+        <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.12.0/jquery.min.js"></script>
+        <script src="/socket.io/socket.io.js" ></script>
+    </head>
  
-  <body>
-    <h1>Une todo list synchroniser via socket.io</h1>
-    <p id="listOfTodo">
-    </p>
+    <body>
+        <h1>Une todo list synchroniser via socket.io</h1>
+        <p id="listOfTodo">
+        </p>
 
-    <form action="/" method="post" id="formTodolist">
-        <label for="newtodo">Que devons nous faire ?</label>
-        <input type="text" name="newtodo" id="newtodo" autofocus />
-        <input type="submit" />
-    </form>
+        <form action="/" method="post" id="formTodolist">
+            <label for="newtodo">Que devons nous faire ?</label>
+            <input type="text" name="newtodo" id="newtodo" autofocus />
+            <input type="submit" />
+        </form>
 
-    <script>
-      var socket = io.connect('http://localhost:8080');
-      var clienId = '';
-      var cont = 0;
-      socket.on('connected',function(init){
-        clienId = init.socketId;
-        cont = 0;
-      });
-        jQuery('#formTodolist').submit(function () {
-          var newtodo = jQuery('#newtodo').val();
+        <script>
+            var socket = io.connect('http://localhost:8080');
+            var clienId = ''; // L'id du client, il permet d'identifier un client de façon unique.
+            var cont = 0;  //Un conteur qui permet de différencier les différent todo poster par un même client.
+            socket.on('connected',function(init){
+                clienId = String(init.socketId).replace('/', '').replace('#', '');//Les caractères / et # du socketId sont supprimés car dérangeant 
+                cont = 0;
+            });
 
-          // On envois le todo au serveur
-          socket.emit('newTodo', {id:(clienId+cont) , message:newtodo});
+            jQuery('#formTodolist').submit(function () {
+                var newtodo = jQuery('#newtodo').val();
 
-          //On insert le todo dans la list des todos de la pages
-          jQuery("#listOfTodo").append('<p id='+clienId+cont+'> <a href="/" id="delete" name='+clienId+cont+'>✘</a>  '+ent(newtodo)+'</p>');
+                // On envois le todo au serveur
+                socket.emit('newTodo', {id:(clienId+cont) , message:newtodo});
 
-          cont = cont+1;
-          
-          //Action associer au click sur la croix ( suprimer )
-          jQuery("a").on("click",function(){
-            //on supprime le todo de la page
-            //jQuery('#'+String(jQuery(this).attr("name"))).remove();
+                //On insert le todo dans la list des todos de la pages
+                jQuery("#listOfTodo").append('<p id='+clienId+cont+'> <a href="/" id="delete" name='+clienId+cont+'>✘</a>  '+ent(newtodo)+'</p>');
 
-            //On informe le serveur de la supprésion du todo d'id: jQuery(this).attr("name")
-            socket.emit('deleteTodo', jQuery(this).attr("name"));
+                //Action associer au click sur la croix ( suprimer )
+                jQuery("a").on("click",function(){
+                    //on supprime le todo de la page
+                    jQuery('#'+String(jQuery(this).attr("name"))).remove();
 
-            // On bloque la redirection du lien url
+                    //On informe le serveur de la supprésion du todo d'id: jQuery(this).attr("name")
+                    socket.emit('deleteTodo', jQuery(this).attr("name"));
+
+                    // On bloque la redirection du lien url
+                    return false; 
+                });
+
+            cont = cont+1;
+
+            // Vide la zone de todo et remet le focus dessus
+            jQuery('#newtodo').val('').focus();
+
+            // On bloque l'envoi "classique" du formulaire
             return false; 
-          });
+            });
+          
 
+            // On suprime le todo designer par le serveur
+            socket.on('todoDelete',function(id){
+                jQuery("#"+id).remove();
+            });
 
-          // Vide la zone de todo et remet le focus dessus
-          jQuery('#newtodo').val('').focus();
+            // On ajoute le todo donner par le serveur
+            socket.on('addTodo',function(todo){
+                jQuery("#listOfTodo").append('<p id='+todo.id+'> <a href="/" id="delete" name='+todo.id+'>✘</a>  '+ent(todo.message)+'</p>');
+                
+                //Action associer au click sur la croix ( suprimer )
+                jQuery("a").on("click",function(){
+                    //on supprime le todo de la page
+                    jQuery('#'+String(jQuery(this).attr("name"))).remove();
 
+                    //On informe le serveur de la supprésion du todo d'id: jQuery(this).attr("name")
+                    socket.emit('deleteTodo', jQuery(this).attr("name"));
 
-          // On bloque l'envoi "classique" du formulaire
-          return false; 
-        });
-      
+                    // On bloque la redirection du lien url
+                    return false; 
+                });
+            });
 
-      // On suprime le todo designer par le serveur
-      socket.on('todoDelete',function(id){
-        jQuery("#"+id).remove();
-      });
+            /**
+            * Bloquer l'écriture de JavaScipt de de Html
+            *
+            * @param   str     Le string rentré par l'utilisateur
+            * @return          Le string sécurisé 
+            * @author  Sylyon
+            **/
+            function ent(str) {
+                return String(str).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+            }
 
-      // On ajoute le todo donner par le serveur
-      socket.on('addTodo',function(todo){
-        jQuery("#listOfTodo").append('<p id='+todo.id+'> <a href="/" id="delete" name='+todo.id+'>✘</a>  '+ent(todo.message)+'</p>');
-      });
-
-      /**
-      * Bloquer l'écriture de JavaScipt de de Html
-       *
-       * @param   str     Le string rentré par l'utilisateur
-       * @return          Le string sécurisé 
-       * @author  Sylyon
-      **/
-      function ent(str) {
-        return String(str).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
-      }
-
-    </script>
-  </body>
+        </script>
+    </body>
 </html>
